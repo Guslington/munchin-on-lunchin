@@ -1,0 +1,243 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Munchin on lunchin
+Parameters:
+  Environment:
+    Type: String
+    Default: "dev"
+
+Resources:
+
+  ApiGateway:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: v1
+      DefinitionBody:
+        swagger: '2.0'
+        info:
+          title: Munchin on lunchin
+          description: Munchin on lunchin
+          version: "0.0.1"
+        schemes:
+          - https
+        basePath: /
+        produces:
+          - application/json
+        Cors:
+          AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+          AllowMethods: "'DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT'"
+          AllowOrigin: "'*'"
+        paths:
+          /setlocale:
+            post:
+              summary: find a good lunch spot
+              description: description
+              consumes:
+                - application/json
+              produces:
+                - application/json
+              tags:
+                - MuchinOnLunchin
+              x-amazon-apigateway-integration:
+                type: aws_proxy
+                uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${WhatsForLunch.Arn}/invocations"
+                httpMethod: POST
+              responses:
+                "200":
+                  description: object with a decision
+                  body:
+                    schema: |
+                      {
+                        "text": "locale set"
+                      }
+                "400":
+                  description: Bad Request
+                  body:
+                    schema: Error
+
+          /whatsforlunch:
+            post:
+              summary: find a good lunch spot
+              description: description
+              consumes:
+                - application/json
+              produces:
+                - application/json
+              tags:
+                - MuchinOnLunchin
+              x-amazon-apigateway-integration:
+                type: aws_proxy
+                uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${WhatsForLunch.Arn}/invocations"
+                httpMethod: POST
+              responses:
+                "200":
+                  description: object with a decision
+                  body:
+                    schema: |
+                      {
+                        "response_type": "in_channel",
+                        "text": "place - address",
+                        attachements: [
+                          {
+                            "actions": [
+                                {
+                                  "type": "button",
+                                  "text": "website",
+                                  "url": "https://url",
+                                  "style": "primary"
+                                },
+                                {
+                                  "type": "button",
+                                  "text": "map",
+                                  "url": "https://url",
+                                  "style": "primary"
+                                },
+                                {
+                                  "type": "button",
+                                  "text": "directions",
+                                  "url": "https://url",
+                                  "style": "primary"
+                                }
+                            ]
+                          }
+                        ]
+                      }
+                "400":
+                  description: Bad Request
+                  body:
+                    schema: Error
+          /coffeerun:
+            post:
+              summary: find a good coffee spot
+              description: description
+              consumes:
+                - application/json
+              produces:
+                - application/json
+              tags:
+                - MuchinOnLunchin
+              x-amazon-apigateway-integration:
+                type: aws_proxy
+                uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${CoffeeRun.Arn}/invocations"
+                httpMethod: POST
+              responses:
+                "200":
+                  description: object with a decision
+                  body:
+                    schema: |
+                      {
+                        "response_type": "in_channel",
+                        "text": "place - address",
+                        attachements: [
+                          {
+                            "actions": [
+                                {
+                                  "type": "button",
+                                  "text": "website",
+                                  "url": "https://url",
+                                  "style": "primary"
+                                },
+                                {
+                                  "type": "button",
+                                  "text": "map",
+                                  "url": "https://url",
+                                  "style": "primary"
+                                },
+                                {
+                                  "type": "button",
+                                  "text": "directions",
+                                  "url": "https://url",
+                                  "style": "primary"
+                                }
+                            ]
+                          }
+                        ]
+                      }
+                "400":
+                  description: Bad Request
+                  body:
+                    schema: Error
+
+  WhatsForLunch:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handler.whats_for_lunch
+      Runtime: python3.6
+      CodeUri: ./build/api.zip
+      Timeout: 120
+      Environment:
+        Variables:
+          ZOMATO_API_KEY: ""
+      Policies:
+        - Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Action:
+                - logs:PutLogEvents
+                - logs:DescribeLogStreams
+                - logs:DescribeLogGroups
+              Resource:
+                - '*'
+      Events:
+        GetApi:
+          Type: Api
+          Properties:
+            Path: /whatsforlunch
+            Method: post
+            RestApiId:
+                Ref: ApiGateway
+
+  CoffeeRun:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handler.coffee_run
+      Runtime: python3.6
+      CodeUri: ./build/api.zip
+      Timeout: 120
+      Environment:
+        Variables:
+          ZOMATO_API_KEY: ""
+      Policies:
+        - Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Action:
+                - logs:PutLogEvents
+                - logs:DescribeLogStreams
+                - logs:DescribeLogGroups
+              Resource:
+                - '*'
+      Events:
+        GetApi:
+          Type: Api
+          Properties:
+            Path: /coffeerun
+            Method: post
+            RestApiId:
+                Ref: ApiGateway
+
+  SetLocale:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handler.set_locale
+      Runtime: python3.6
+      CodeUri: ./build/api.zip
+      Timeout: 120
+      Policies:
+        - Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Action:
+                - logs:PutLogEvents
+                - logs:DescribeLogStreams
+                - logs:DescribeLogGroups
+              Resource:
+                - '*'
+      Events:
+        GetApi:
+          Type: Api
+          Properties:
+            Path: /setlocale
+            Method: post
+            RestApiId:
+                Ref: ApiGateway
